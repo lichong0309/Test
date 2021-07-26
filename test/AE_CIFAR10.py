@@ -124,16 +124,12 @@ class Autoencoderv3(nn.Module):
     def forward(self, x):
         # Encoder
         h = self.encoder(x)
-        # Bottle-neck
-        z, mu, logvar = self._bottleneck(h)
-        # decoder
-        z = self.fc3(z)
+        z = self.softmax(h)
         d = self.decoder(z)
         return d, h
 
 
 def loss_function(recon_x, x, mu, logvar):
-    # https://arxiv.org/abs/1312.6114 (Appendix B)
     BCE = F.binary_cross_entropy(recon_x, x, size_average=False)        
     KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
     return BCE + KLD
@@ -156,7 +152,8 @@ for epoch in range(num_epochs):
     total_mseloss = 0.0
     total_clsloss = 0.0
     for ind, data in enumerate(dataloader):
-        img, labels = data[0].to(device), data[1].to(device)
+        data = data.to(device)
+        img, labels = data[0], data[1]
         output, output_en = model(img)
         loss_mse = distance(output, img)
         loss_cls = class_loss(output_en, labels)
@@ -174,6 +171,7 @@ for epoch in range(num_epochs):
     total_samples = 0
     for data in testloader:
         # We only care about the 10 dimensional encoder output for classification
+        data = data.to(device)
         img, labels = data[0].to(device), data[1].to(device)
         _, output_en = model(img)   
         # output_en contains 10 values for each input, apply softmax to calculate class probabilities
