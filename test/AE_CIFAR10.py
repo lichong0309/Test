@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import os
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+print("test")
 
 num_epochs = 50
 batch_size = 64
